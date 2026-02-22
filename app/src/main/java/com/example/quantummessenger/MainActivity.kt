@@ -8,7 +8,6 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import android.util.Base64
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -99,10 +98,9 @@ class MainActivity : AppCompatActivity() {
 
                     withContext(Dispatchers.Main) { tvStatus.text = "Старт ядра..." }
 
-                    val torPath = TorLoader.getTorExecutablePath(applicationContext)
+                    val torRuntime = TorLoader.prepareTorRuntime(applicationContext)
                     val cookieFile = File(dataDir, "control_auth_cookie")
                     val torrc = File(configDir, "torrc")
-                    val torFile = File(torPath)
 
                     torrc.writeText(
                         "SocksPort 9050\n" +
@@ -110,11 +108,11 @@ class MainActivity : AppCompatActivity() {
                                 "CookieAuthentication 1\n" +
                                 "CookieAuthFile ${cookieFile.absolutePath}\n" +
                                 "DataDirectory ${dataDir.absolutePath}\n" +
-                                "GeoIPFile ${torFile.parent}/geoip\n" +
-                                "GeoIPv6File ${torFile.parent}/geoip6\n"
+                                "GeoIPFile ${torRuntime.geoIpFilePath}\n" +
+                                "GeoIPv6File ${torRuntime.geoIpV6FilePath}\n"
                     )
 
-                    val process = ProcessBuilder(torPath, "-f", torrc.absolutePath).start()
+                    val process = ProcessBuilder(torRuntime.executablePath, "-f", torrc.absolutePath).start()
 
                     withContext(Dispatchers.Main) { tvStatus.text = "Инициализация (ждите)..." }
 
@@ -132,8 +130,10 @@ class MainActivity : AppCompatActivity() {
                                 btnStart.visibility = android.view.View.GONE
                             }
 
-                            CommunicationHub.startServer { incomingText ->
-                                tvLog.append("\n[ОНИ]: $incomingText")
+                            launch {
+                                CommunicationHub.startServer { incomingText ->
+                                    tvLog.append("\n[ОНИ]: $incomingText")
+                                }
                             }
                         } catch (e: Exception) {
                             process.destroy() // Если не удалось получить адрес, убиваем процесс
