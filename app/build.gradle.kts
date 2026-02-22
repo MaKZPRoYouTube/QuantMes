@@ -50,6 +50,7 @@ dependencies {
 
     implementation("org.bouncycastle:bcprov-jdk18on:1.77")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.77")
+    implementation("org.bouncycastle:bcpqc-jdk18on:1.77")
 
     implementation("info.guardianproject:tor-android:0.4.9.5")
     implementation("info.guardianproject:jtorctl:0.4.5.7")
